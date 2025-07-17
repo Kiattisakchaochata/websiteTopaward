@@ -1,0 +1,102 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  password_hash String
+  role          String   @default("user")
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  reviews Review[]
+}
+
+model Review {
+  id         String   @id @default(cuid())
+  user_id    String
+  store_id String
+  rating     Int
+  comment    String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  user    User    @relation(fields: [user_id], references: [id])
+  store    Store @relation(fields: [store_id], references: [id], onDelete: Cascade)
+}
+
+model Category {
+  id         String  @id @default(cuid())
+  name       String @unique
+  cover_image String?
+  image_url  String?
+  order_number   Int @unique
+  avg_review Float?  @default(0)
+
+  stores Store[]
+}
+
+// ✅ prisma/schema.prisma (เฉพาะ model Store)
+model Store {
+  id             String   @id @default(cuid())
+  name           String
+  description    String
+  address        String
+  social_links   String
+  category_id    String
+  order_number   Int       // 👉 ลำดับการแสดงผลภายในหมวดหมู่
+  cover_image    String? 
+  is_active    Boolean  @default(true)
+  expired_at   DateTime?  // วันที่หมดอายุ
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  // RELATIONS
+  category       Category      @relation(fields: [category_id], references: [id])
+  images         Image[]
+  reviews        Review[]
+  visitorCounter VisitorCounter?
+
+  @@unique([category_id, order_number]) // 👉 ห้ามร้านซ้ำลำดับกันในหมวดเดียวกัน
+  @@map("stores")
+}
+
+model VisitorCounter {
+  id        String   @id @default(cuid())
+  total     Int      @default(0)
+  store     Store?   @relation(fields: [storeId], references: [id])
+  storeId   String?  @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Image {
+  id           String   @id @default(cuid())
+  store_id     String
+  image_url    String
+  order_number Int
+  alt_text     String?
+  created_at   DateTime @default(now())
+
+  store Store @relation(fields: [store_id], references: [id], onDelete: Cascade)
+
+  @@unique([store_id, order_number]) // ลำดับในร้านต้องไม่ซ้ำกัน
+  @@map("images")
+}
+model WebsiteVisitorCounter {
+  id     String @id            // ค่า fix = "singleton"
+  total  Int    @default(0)
+}

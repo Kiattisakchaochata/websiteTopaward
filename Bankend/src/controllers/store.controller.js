@@ -541,6 +541,7 @@ export const reactivateStore = async (req, res, next) => {
       data: {
         is_active: true,
         expired_at: new Date(new_expired_at),
+        renewal_count: { increment: 1 },
       },
     });
 
@@ -568,6 +569,36 @@ export const getExpiredStores = async (req, res, next) => {
     });
 
     res.json({ stores: expiredStores });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getStoreLoyaltyStats = async (req, res, next) => {
+  try {
+    const stores = await prisma.store.findMany({
+      select: {
+        id: true,
+        name: true,
+        created_at: true,
+        renewal_count: true,
+      },
+    });
+
+    const now = new Date();
+
+    const data = stores.map((store) => {
+      const diffYears = (now - store.created_at) / (1000 * 60 * 60 * 24 * 365.25);
+      return {
+        id: store.id,
+        name: store.name,
+        created_at: store.created_at,
+        renewal_count: store.renewal_count,
+        years_with_us: parseFloat(diffYears.toFixed(1)), // ✅ ระบุปี (ทศนิยม 1 ตำแหน่ง)
+      };
+    });
+
+    res.json({ stores: data });
   } catch (err) {
     next(err);
   }

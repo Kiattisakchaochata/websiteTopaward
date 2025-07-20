@@ -56,7 +56,9 @@ const Dashboard = () => {
         setExpiredStores(expiredRes.data.stores);
       } catch (err) {
         console.error("Error fetching admin stats:", err);
-        toast.error("เกิดข้อผิดพลาดในการโหลดข้อมูล");
+        toast.error("เกิดข้อผิดพลาดในการโหลดข้อมูล", {
+  toastId: "load-error", // 💡 ใส่ ID ซ้ำกันจะไม่แสดงซ้ำ
+});
       }
     };
 
@@ -64,28 +66,64 @@ const Dashboard = () => {
   }, []);
 
   const handleReactivate = async (store) => {
-    const confirm = await Swal.fire({
-      title: `ยืนยันต่ออายุร้าน ${store.name}?`,
-      text: "ระบบจะกำหนดวันหมดอายุใหม่ให้อัตโนมัติ",
-      icon: "question",
-      showCancelButton: true,
-      confirmButtonText: "ยืนยัน",
-      cancelButtonText: "ยกเลิก",
-    });
+  const { value: option } = await Swal.fire({
+    title: `เลือกระยะเวลาต่ออายุร้าน ${store.name}`,
+    input: 'select',
+    inputOptions: {
+      '365': '1 ปี',
+      '730': '2 ปี',
+      '1095': '3 ปี',
+      'lifetime': 'ตลอดชีพ',
+    },
+    inputPlaceholder: 'เลือกระยะเวลา',
+    showCancelButton: true,
+    confirmButtonText: "ต่ออายุ",
+    cancelButtonText: "ยกเลิก",
+  });
 
-    if (confirm.isConfirmed) {
-      try {
-        const res = await axiosInstance.patch(`/admin/stores/${store.id}/reactivate`);
-        toast.success(res.data.message || "ต่ออายุร้านสำเร็จ");
+  if (!option) return;
 
-        setExpiringStores((prev) => prev.filter((s) => s.id !== store.id));
-        setExpiredStores((prev) => prev.filter((s) => s.id !== store.id));
-      } catch (err) {
-        console.error("Reactivate error:", err);
-        toast.error("ไม่สามารถต่ออายุร้านได้");
-      }
+  try {
+    let newExpiredDate;
+
+    if (option === 'lifetime') {
+      // ✅ ตั้งวันหมดอายุห่างไป 100 ปี
+      newExpiredDate = new Date();
+      newExpiredDate.setFullYear(newExpiredDate.getFullYear() + 100);
+    } else {
+      newExpiredDate = new Date();
+      newExpiredDate.setDate(newExpiredDate.getDate() + parseInt(option));
+    }
+
+    const res = await axiosInstance.patch(
+      `/admin/stores/${store.id}/reactivate`,
+      { new_expired_at: newExpiredDate.toISOString() }
+    );
+
+    toast.success(res.data.message || "ต่ออายุร้านสำเร็จ");
+
+    // เอาออกจาก list
+    setExpiringStores((prev) => prev.filter((s) => s.id !== store.id));
+    setExpiredStores((prev) => prev.filter((s) => s.id !== store.id));
+  } catch (err) {
+    console.error("Reactivate error:", err.response?.data || err.message);
+    toast.error("ไม่สามารถต่ออายุร้านได้");
+  }
+};
+const [loyaltyStats, setLoyaltyStats] = useState([]);
+
+useEffect(() => {
+  const fetchLoyaltyStats = async () => {
+    try {
+      const res = await axiosInstance.get("/admin/stores/loyalty");
+      setLoyaltyStats(res.data.stores);
+    } catch (err) {
+      console.error("Loyalty Stats Error:", err);
     }
   };
+
+  fetchLoyaltyStats();
+}, []);
 
   const cardData = [
     { title: "ผู้ใช้งาน", value: stats.users, icon: <User className="text-blue-500" size={28} /> },
@@ -204,7 +242,39 @@ const Dashboard = () => {
           </tbody>
         </table>
       </div>
-
+{/* ✅ ข้อมูลความสัมพันธ์กับร้านค้า */}
+{loyaltyStats.length > 0 && (
+  <div className="bg-white p-6 rounded-xl shadow mt-10">
+    <h3 className="text-xl font-semibold mb-4 text-gray-700">ข้อมูลความสัมพันธ์กับร้านค้า</h3>
+    <table className="w-full text-left border text-sm">
+      <thead className="bg-gray-100">
+        <tr>
+          <th className="p-3 border">ชื่อร้าน</th>
+          <th className="p-3 border">วันที่สมัคร</th>
+          <th className="p-3 border text-center">ต่ออายุแล้ว</th>
+          <th className="p-3 border text-center">อยู่กับเรามาแล้ว</th>
+        </tr>
+      </thead>
+      <tbody>
+  {loyaltyStats.map((store) => (
+    <tr key={store.id}>
+      <td className="p-3 border">{store.name}</td>
+      <td className="p-3 border">{new Date(store.created_at).toLocaleDateString()}</td>
+      <td className="p-3 border text-center">{store.renewal_count} ครั้ง</td>
+      <td className="p-3 border text-center">{Math.floor(store.years_with_us)} ปี</td>
+      <td className="p-3 border text-center">
+        {(() => {
+          const years = store.years_with_us;
+          const months = Math.round((store.years_with_us % 1) * 12);
+          return `${Math.floor(years)} ปี${months > 0 ? ` ${months} เดือน` : ""}`;
+        })()}
+      </td>
+    </tr>
+  ))}
+</tbody>
+    </table>
+  </div>
+)}
     </div>
   );
 };

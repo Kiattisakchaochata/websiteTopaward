@@ -48,6 +48,17 @@ const AdminLayout = () => {
           >
             ร้านค้า
           </NavLink>
+          {/* ✅ เมนูแบนเนอร์ที่เพิ่ม */}
+  <NavLink
+    to="/admin/banners"
+    className={({ isActive }) =>
+      isActive
+        ? "font-bold text-blue-600"
+        : "hover:text-blue-500 transition"
+    }
+  >
+    แบนเนอร์
+  </NavLink>
 
           <button
             onClick={handleLogout}
@@ -57,8 +68,6 @@ const AdminLayout = () => {
           </button>
         </div>
       </nav>
-
-      {/* Outlet แสดงแต่ละหน้าที่อยู่ใน Admin */}
       <main className="p-4 sm:p-6 flex-1">
         <Outlet />
       </main>

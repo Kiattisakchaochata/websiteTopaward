@@ -11,15 +11,10 @@ import CategoryCard from "../components/CategoryCard";
 import StoreCardHorizontal from "../components/StoreCardHorizontal";
 import PopularReviews from "../components/PopularReviews";
 
-const bannerImages = [
-  { url: "/banners/banner1_spa.png", alt: "คลินิกความงาม" },
-  { url: "/banners/travel.png", alt: "ท่องเที่ยว" },
-  { url: "/banners/banner3_travel.png", alt: "ท่องเที่ยวอื่นๆ" },
-];
-
 const HomePage = () => {
   const [categories, setCategories] = useState([]);
   const [latestStores, setLatestStores] = useState([]);
+  const [bannerImages, setBannerImages] = useState([]); // ✅ ย้ายเข้ามาใน component
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -29,23 +24,20 @@ const HomePage = () => {
       try {
         const categoryRes = await axiosInstance.get("/categories");
         const storeRes = await axiosInstance.get("/stores");
-        console.log("📦 ร้านทั้งหมดที่โหลดมา:", storeRes.data.stores);
-      console.log(
-        "✅ ร้านที่ active อยู่:",storeRes.data.stores.filter((s) => s.is_active)
-      );
-        const realCategories = categoryRes.data.filter((c) => c.id && c.name);
+        const bannerRes = await axiosInstance.get("/admin/banners"); // ✅ เรียก banner
 
-        // ✅ กรองร้านที่ is_active === true เท่านั้น
+        const realCategories = categoryRes.data.filter((c) => c.id && c.name);
         const storesWithValidId = storeRes.data.stores
           .filter((s) => s.id)
-          .filter((s) => s.is_active); // 👈 แสดงเฉพาะร้านที่ยังเปิดอยู่
+          .filter((s) => s.is_active);
 
         const sortedByDate = [...storesWithValidId]
           .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
           .slice(0, 4);
-console.log("✅ ร้านล่าสุดที่จะโชว์:", sortedByDate);
+
         setCategories(realCategories);
         setLatestStores(sortedByDate);
+        setBannerImages(bannerRes.data.banners); // ✅ บันทึก banner
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -59,19 +51,19 @@ console.log("✅ ร้านล่าสุดที่จะโชว์:", so
       {/* 🔶 แบนเนอร์ */}
       <div className="max-w-6xl mx-auto px-4 py-6">
         <Swiper
-          autoplay={{ delay: 8000 }}
-          loop
-          effect="fade"
-          speed={1200}
-          modules={[Autoplay, EffectFade]}
-          fadeEffect={{ crossFade: true }}
-        >
+  autoplay={{ delay: 8000 }}
+  loop={bannerImages.length > 1}
+  effect="fade"
+  speed={1200}
+  modules={[Autoplay, EffectFade]}
+  fadeEffect={{ crossFade: true }}
+>
           {bannerImages.map((image, idx) => (
             <SwiperSlide key={idx}>
               <div className="overflow-hidden aspect-[3/1] w-full rounded-2xl">
                 <img
-                  src={image.url}
-                  alt={image.alt}
+                  src={image.image_url}
+                  alt={image.alt_text}
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -82,21 +74,21 @@ console.log("✅ ร้านล่าสุดที่จะโชว์:", so
 
       {/* 🔶 หมวดหมู่ */}
       <div className="max-w-6xl mx-auto px-4 py-8">
-  <h2 className="text-2xl font-bold mb-6">หมวดหมู่</h2>
-  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-    {categories
-      .filter((cat) => !!cat?.id) // ✅ ป้องกัน cat.id undefined
-      .map((cat) => (
-        <div
-          key={cat.id}
-          className="cursor-pointer"
-          onClick={() => navigate(`/category/${cat.id}`)} // ✅ ปลอดภัยเพราะ filter แล้ว
-        >
-          <CategoryCard cat={cat} />
+        <h2 className="text-2xl font-bold mb-6">หมวดหมู่</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          {categories
+            .filter((cat) => !!cat?.id)
+            .map((cat) => (
+              <div
+                key={cat.id}
+                className="cursor-pointer"
+                onClick={() => navigate(`/category/${cat.id}`)}
+              >
+                <CategoryCard cat={cat} />
+              </div>
+            ))}
         </div>
-      ))}
-  </div>
-</div>
+      </div>
 
       {/* 🔶 รีวิวยอดนิยม */}
       <div className="max-w-6xl mx-auto px-4 pt-4 pb-2">

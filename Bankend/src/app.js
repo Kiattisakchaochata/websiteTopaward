@@ -11,7 +11,7 @@ import publicCategoryRoutes from './routes/public/category.public.route.js';
 import imageAdminRoute from './routes/admin/image.admin.route.js';
 import visitorRoutes from './routes/visitor.routes.js';
 import { startCronJobs } from './cron.js';
-
+import bannerRoute from './routes/admin/banner.routes.js'
 const app = express();
 
 // ✅ CORS ก่อนทุกอย่าง
@@ -25,6 +25,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // ✅ Routes
+app.use('/api/admin/banners', bannerRoute);
 app.use('/api/admin/stores', storeAdminRoute);
 app.use('/api/admin/categories', categoryAdminRoute);
 app.use('/api/users', userAdminRoute);

@@ -4,6 +4,7 @@ import {
   createStore,
   getAllStores,
   getStoreById,
+  getStoreLoyaltyStats,
   updateStore,
   deleteStore,
   deleteStoreImage,
@@ -32,6 +33,7 @@ router.get('/expired', getExpiredStores);
 router.get('/expiring-soon', getExpiringSoonStores);
 router.patch('/:id/reactivate', reactivateStore);
 
+router.get("/loyalty", getStoreLoyaltyStats);
 router.get('/', getAllStores);
 router.get('/:id', getStoreById);
 router.post('/', storeUpload, createStore);

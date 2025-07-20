@@ -62,6 +62,7 @@ model Store {
   is_active    Boolean  @default(true)
   expired_at   DateTime?  // วันที่หมดอายุ
   created_at     DateTime @default(now())
+  renewal_count Int     @default(0)
   updated_at     DateTime @updatedAt
 
   // RELATIONS
@@ -99,4 +100,11 @@ model Image {
 model WebsiteVisitorCounter {
   id     String @id            // ค่า fix = "singleton"
   total  Int    @default(0)
+}
+model Banner {
+  id        String   @id @default(cuid())
+  image_url String
+  alt_text  String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
 }

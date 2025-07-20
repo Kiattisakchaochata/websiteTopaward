@@ -24,8 +24,11 @@ const AdminNavbar = () => {
         <Link to="/admin/stores" className="hover:underline font-medium">
           ร้านค้า
         </Link>
+        {/* ✅ เพิ่มเมนู "แบนเนอร์" */}
+        <Link to="/admin/banners" className="hover:underline font-medium">
+          แบนเนอร์
+        </Link>
 
-        {/* ✅ ปุ่มออกจากระบบ */}
         <button
           onClick={handleLogout}
           className="ml-4 bg-red-500 hover:bg-red-600 text-white px-4 py-1 rounded-lg"

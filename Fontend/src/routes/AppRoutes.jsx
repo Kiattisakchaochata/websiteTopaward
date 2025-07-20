@@ -1,5 +1,6 @@
 import { Routes, Route } from "react-router-dom";
 import HomePage from "../pages/HomePage";
+import BannerPage from "../admin/pages/BannerPage";
 import PopularReviewPage from "../pages/PopularReviewPage";
 import LoginPage from "../pages/LoginPage";
 import MainLayout from "../layouts/MainLayout";
@@ -35,6 +36,7 @@ const AppRoutes = () => {
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="categories" element={<CategoryPage />} />
         <Route path="stores" element={<StorePage />} />
+        <Route path="banners" element={<BannerPage />} />
         
       </Route>
     </Routes>
